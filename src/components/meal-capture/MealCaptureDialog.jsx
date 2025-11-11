@@ -22,6 +22,62 @@ import { downscaleImageFile } from "@/utils/image";
 const captureLabel = "Capture Photo";
 const uploadLabel = "Upload Photo";
 
+const ensureDateValue = (value) => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+
+  if (typeof value === "number" || typeof value === "string") {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  return null;
+};
+
+const padTwoDigits = (value) => String(value).padStart(2, "0");
+
+const formatDateInputValue = (value) => {
+  const date = ensureDateValue(value);
+  if (!date) return "";
+  return `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(
+    date.getDate()
+  )}`;
+};
+
+const formatTimeInputValue = (value) => {
+  const date = ensureDateValue(value);
+  if (!date) return "";
+  return `${padTwoDigits(date.getHours())}:${padTwoDigits(date.getMinutes())}`;
+};
+
+const cloneOrNow = (value) => {
+  const date = ensureDateValue(value);
+  return date ? new Date(date) : new Date();
+};
+
+const formatMealDatePayload = (value) => {
+  const date = ensureDateValue(value);
+  if (!date) return "";
+  const offsetMinutes = date.getTimezoneOffset();
+  const absoluteOffset = Math.abs(offsetMinutes);
+  const offsetHours = padTwoDigits(Math.floor(absoluteOffset / 60));
+  const offsetMins = padTwoDigits(absoluteOffset % 60);
+  const sign = offsetMinutes > 0 ? "-" : "+";
+
+  return (
+    `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(
+      date.getDate()
+    )}` +
+    `T${padTwoDigits(date.getHours())}:${padTwoDigits(date.getMinutes())}:${padTwoDigits(
+      date.getSeconds()
+    )}` +
+    `${sign}${offsetHours}:${offsetMins}`
+  );
+};
+
 export function MealCaptureDialog({ open, onClose, onConfirm }) {
   const cameraInputRef = useRef(null);
   const uploadInputRef = useRef(null);
@@ -91,8 +147,12 @@ export function MealCaptureDialog({ open, onClose, onConfirm }) {
 
   const handleConfirm = useCallback(async () => {
     if (!draftFile || !previewUrl) return;
-    const date = captureDate instanceof Date ? captureDate.toISOString() : captureDate;
-    await onConfirm({ file: draftFile, previewUrl, capturedAt: date });
+    const formattedDate = formatMealDatePayload(captureDate);
+    await onConfirm({
+      file: draftFile,
+      previewUrl,
+      capturedAt: formattedDate || undefined,
+    });
     handleClose();
   }, [captureDate, draftFile, handleClose, onConfirm, previewUrl]);
 
@@ -190,9 +250,10 @@ export function MealCaptureDialog({ open, onClose, onConfirm }) {
             </Typography>
             <input
               type="date"
-              value={new Date(captureDate).toISOString().slice(0, 10)}
+              value={formatDateInputValue(captureDate)}
               onChange={(event) => {
-                const next = new Date(captureDate);
+                if (!event.target.value) return;
+                const next = cloneOrNow(captureDate);
                 const [year, month, day] = event.target.value.split("-").map(Number);
                 if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
                   next.setFullYear(year, month - 1, day);
@@ -208,9 +269,10 @@ export function MealCaptureDialog({ open, onClose, onConfirm }) {
             </Typography>
             <input
               type="time"
-              value={new Date(captureDate).toISOString().slice(11, 16)}
+              value={formatTimeInputValue(captureDate)}
               onChange={(event) => {
-                const next = new Date(captureDate);
+                if (!event.target.value) return;
+                const next = cloneOrNow(captureDate);
                 const [hour, minute] = event.target.value.split(":").map(Number);
                 if (Number.isFinite(hour) && Number.isFinite(minute)) {
                   next.setHours(hour, minute, 0, 0);

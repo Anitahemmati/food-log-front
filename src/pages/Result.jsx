@@ -11,6 +11,11 @@ import { useMeal } from "@/context/meal";
 import { resolveBackendImage } from "@/api";
 import { formatMealDate } from "@/utils/meals";
 
+const formatPercent = (value) => {
+  if (typeof value !== "number" || Number.isNaN(value)) return null;
+  return `${(value * 100).toFixed(1).replace(/\.0$/, "")}%`;
+};
+
 export default function Result() {
   const { capture, analysis, setCapture, setAnalysis, refreshMeals } = useMeal();
   const navigate = useNavigate();
@@ -39,6 +44,43 @@ export default function Result() {
     : analysis?.raw?.timestamp
     ? formatMealDate(analysis.raw.timestamp)
     : null;
+  const metadata = analysis?.metadata || analysis?.raw?.metadata || {};
+  const hfDiagnostics = analysis?.hfDiagnostics || metadata?.hf_space || null;
+  const inferenceSource =
+    analysis?.inferenceSource ||
+    analysis?.raw?.inference_source ||
+    metadata?.inference_source ||
+    null;
+  const mlServiceError =
+    analysis?.mlServiceError ||
+    analysis?.raw?.ml_service_error ||
+    metadata?.ml_service_error ||
+    null;
+  const nutritionFacts = useMemo(() => {
+    const facts =
+      analysis?.nutritionFacts ||
+      analysis?.raw?.nutrition_facts ||
+      metadata?.nutrition_facts ||
+      {};
+    return {
+      calories: facts?.calories ?? calories ?? null,
+      carbohydrates: facts?.carbohydrates ?? null,
+      proteins: facts?.proteins ?? null,
+      fats: facts?.fats ?? null,
+    };
+  }, [analysis, calories, metadata]);
+  const macroEntries = [
+    { key: "calories", label: "Calories", value: nutritionFacts.calories, unit: "Cal" },
+    { key: "carbohydrates", label: "Carbs", value: nutritionFacts.carbohydrates, unit: "g" },
+    { key: "proteins", label: "Protein", value: nutritionFacts.proteins, unit: "g" },
+    { key: "fats", label: "Fat", value: nutritionFacts.fats, unit: "g" },
+  ];
+  const showInsights = Boolean(inferenceSource || hfDiagnostics || mlServiceError);
+  const readableInferenceSource = inferenceSource
+    ? String(inferenceSource).replace(/[_-]/g, " ")
+    : null;
+  const hfConfidence = formatPercent(hfDiagnostics?.confidence);
+  const hfThreshold = formatPercent(hfDiagnostics?.threshold);
 
   const resetFlow = () => {
     setCapture(null);
@@ -118,10 +160,69 @@ export default function Result() {
                 <Typography variant="small" className="uppercase tracking-wide text-[var(--food-primary-dark)]">
                   Estimated Nutrition
                 </Typography>
-                <Typography variant="h5" className="mt-2 font-semibold text-[var(--food-primary-dark)]">
-                  {calories ? `${calories} Cal` : "Calculating..."}
-                </Typography>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {macroEntries.map((entry) => (
+                    <div
+                      key={entry.key}
+                      className="rounded-xl border border-orange-100/70 bg-white/70 px-3 py-2 text-left shadow-sm"
+                    >
+                      <p className="text-[11px] font-semibold uppercase text-slate-500">
+                        {entry.label}
+                      </p>
+                      <p className="text-lg font-semibold text-[var(--food-primary-dark)]">
+                        {entry.value ?? "—"}
+                        {entry.value != null && entry.unit ? ` ${entry.unit}` : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
+              {showInsights && (
+                <div className="rounded-2xl border border-orange-100 bg-white/80 px-5 py-4 text-left shadow-inner shadow-orange-100/60">
+                  <Typography variant="small" className="uppercase tracking-wide text-[var(--food-primary-dark)]">
+                    Model Insights
+                  </Typography>
+                  <div className="mt-3 space-y-2 text-sm">
+                    {readableInferenceSource && (
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Source</span>
+                        <span className="font-semibold capitalize text-[var(--food-primary-dark)]">
+                          {readableInferenceSource}
+                        </span>
+                      </div>
+                    )}
+                    {hfDiagnostics?.label && (
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Top label</span>
+                        <span className="font-semibold text-[var(--food-primary-dark)]">
+                          {hfDiagnostics.label}
+                        </span>
+                      </div>
+                    )}
+                    {hfConfidence && (
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Confidence</span>
+                        <span className="font-semibold text-[var(--food-primary-dark)]">
+                          {hfConfidence}
+                        </span>
+                      </div>
+                    )}
+                    {hfThreshold && (
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Threshold</span>
+                        <span className="font-semibold text-[var(--food-primary-dark)]">
+                          {hfThreshold}
+                        </span>
+                      </div>
+                    )}
+                    {mlServiceError && (
+                      <div className="rounded-xl border border-red-100 bg-red-50/80 px-3 py-2 text-xs text-red-700">
+                        {mlServiceError}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           {error && (

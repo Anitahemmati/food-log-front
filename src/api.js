@@ -45,6 +45,26 @@ const buildImageUrl = (value) => {
   return `${API_BASE_URL}/${normalized}`;
 };
 
+export const PREDICT_ERROR_CODES = {
+  LOW_CONFIDENCE: "LOW_CONFIDENCE",
+};
+
+const normalizePredictError = (error) => {
+  if (
+    error?.status === 422 &&
+    error?.data &&
+    !error.code
+  ) {
+    const normalized = new Error(
+      error.data?.error || "Prediction confidence too low to save."
+    );
+    normalized.code = PREDICT_ERROR_CODES.LOW_CONFIDENCE;
+    normalized.details = error.data;
+    return normalized;
+  }
+  return error;
+};
+
 export const predictMeal = async (file, { capturedAt } = {}) => {
   const formData = new FormData();
   formData.append("photo", file);
@@ -53,11 +73,15 @@ export const predictMeal = async (file, { capturedAt } = {}) => {
     formData.append("meal_date", capturedAt);
   }
 
-  const { data } = await apiClient.post("/predict", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  try {
+    const { data } = await apiClient.post("/predict", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
 
-  return data;
+    return data;
+  } catch (error) {
+    throw normalizePredictError(error);
+  }
 };
 
 export const fetchMealHistory = async () => {
@@ -100,4 +124,5 @@ export default {
   fetchCurrentUser,
   performHealthCheck,
   resolveBackendImage,
+  PREDICT_ERROR_CODES,
 };
