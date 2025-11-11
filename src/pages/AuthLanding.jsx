@@ -78,10 +78,10 @@ export default function AuthLanding() {
             />
             <div className="space-y-1">
               <Typography variant="h3" className="font-semibold text-[var(--food-primary-dark)]">
-                Welcome to Food Log
+                Welcome to Food Log · Anita Edition
               </Typography>
               <Typography variant="small" className="text-slate-500">
-                Capture meals in seconds and watch your nutrition trends unfold.
+                Capture meals in seconds and watch your nutrition trends unfold — Anita’s build.
               </Typography>
             </div>
           </div>
