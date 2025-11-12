@@ -150,8 +150,8 @@ export default function Result() {
                     </li>
                   ))}
                   {!ingredients.length && (
-                    <li className="rounded-xl border border-dashed border-orange-200 px-4 py-3 text-sm text-orange-300">
-                      Ingredients will appear here after analysis.
+                    <li className="rounded-xl border border-dashed border-orange-200 px-4 py-3 text-sm font-semibold text-orange-500">
+                      Sorry! Unfortunately, we cannot analyze your picture!
                     </li>
                   )}
                 </ul>
