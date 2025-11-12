@@ -93,12 +93,15 @@ export default function Processing() {
             err.message || GENERIC_PREDICTION_ERROR
           );
         }
-        setCapture(null);
         setAnalysis(null);
         const redirectDelay =
           err?.code === PREDICT_ERROR_CODES.LOW_CONFIDENCE ? 4000 : 2500;
         redirectTimeout = setTimeout(
-          () => navigate("/dashboard/home", { replace: true }),
+          () => {
+            setCapture(null);
+            setAnalysis(null);
+            navigate("/dashboard/home", { replace: true });
+          },
           redirectDelay
         );
       }
