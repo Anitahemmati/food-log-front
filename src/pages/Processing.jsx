@@ -9,6 +9,8 @@ const formatPercent = (value) => {
   return `${(value * 100).toFixed(1).replace(/\.0$/, "")}%`;
 };
 
+const GENERIC_PREDICTION_ERROR = "تشخیص و بررسی تصویر ارسالی ممکن نیست";
+
 export default function Processing() {
   const { capture, setAnalysis, setCapture } = useMeal();
   const [error, setError] = useState("");
@@ -31,7 +33,7 @@ export default function Processing() {
           capturedAt: capture?.capturedAt,
         });
         if (!prediction) {
-          throw new Error("Prediction failed. No data returned from server.");
+          throw new Error(GENERIC_PREDICTION_ERROR);
         }
 
         const inferredCalories =
@@ -79,12 +81,12 @@ export default function Processing() {
           setError(
             err.details?.details ||
               err.message ||
-              "We detected a meal but the confidence is below the required threshold."
+              GENERIC_PREDICTION_ERROR
           );
         } else {
           setLowConfidenceDetails(null);
           setError(
-            err.message || "We could not analyze this meal. Please try again."
+            err.message || GENERIC_PREDICTION_ERROR
           );
         }
         setCapture(null);
