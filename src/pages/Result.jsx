@@ -75,7 +75,6 @@ export default function Result() {
     { key: "proteins", label: "Protein", value: nutritionFacts.proteins, unit: "g" },
     { key: "fats", label: "Fat", value: nutritionFacts.fats, unit: "g" },
   ];
-  const showInsights = Boolean(inferenceSource || hfDiagnostics || mlServiceError);
   const readableInferenceSource = inferenceSource
     ? String(inferenceSource).replace(/[_-]/g, " ")
     : null;
@@ -177,52 +176,6 @@ export default function Result() {
                   ))}
                 </div>
               </div>
-              {showInsights && (
-                <div className="rounded-2xl border border-orange-100 bg-white/80 px-5 py-4 text-left shadow-inner shadow-orange-100/60">
-                  <Typography variant="small" className="uppercase tracking-wide text-[var(--food-primary-dark)]">
-                    Model Insights
-                  </Typography>
-                  <div className="mt-3 space-y-2 text-sm">
-                    {readableInferenceSource && (
-                      <div className="flex items-center justify-between text-slate-600">
-                        <span>Source</span>
-                        <span className="font-semibold capitalize text-[var(--food-primary-dark)]">
-                          {readableInferenceSource}
-                        </span>
-                      </div>
-                    )}
-                    {hfDiagnostics?.label && (
-                      <div className="flex items-center justify-between text-slate-600">
-                        <span>Top label</span>
-                        <span className="font-semibold text-[var(--food-primary-dark)]">
-                          {hfDiagnostics.label}
-                        </span>
-                      </div>
-                    )}
-                    {hfConfidence && (
-                      <div className="flex items-center justify-between text-slate-600">
-                        <span>Confidence</span>
-                        <span className="font-semibold text-[var(--food-primary-dark)]">
-                          {hfConfidence}
-                        </span>
-                      </div>
-                    )}
-                    {hfThreshold && (
-                      <div className="flex items-center justify-between text-slate-600">
-                        <span>Threshold</span>
-                        <span className="font-semibold text-[var(--food-primary-dark)]">
-                          {hfThreshold}
-                        </span>
-                      </div>
-                    )}
-                    {mlServiceError && (
-                      <div className="rounded-xl border border-red-100 bg-red-50/80 px-3 py-2 text-xs text-red-700">
-                        {mlServiceError}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
           {error && (
